@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/api.Dockerfile
+      target: dev
+    command: npm run dev:docker
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=${PORT}
+      - DATABASE_URL=${DATABASE_URL}   # 컨테이너 실행 시: postgresql://sdvx:sdvx@pg:5432/sdvx
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+    volumes:
+      - ../:/app
+      - /app/node_modules
+    working_dir: /app
+    networks:
+      - sdvx_net
+
+networks:
+  sdvx_net:
+    external: true

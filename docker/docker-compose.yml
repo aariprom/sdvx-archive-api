@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  api:
+    image: sdvx-archive-api:${TAG:-dev}
+    container_name: sdvx-api
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - sdvx_net
+  db:
+    image: postgres:16-alpine
+    container_name: sdvx-db
+    environment:
+      POSTGRES_USER: ${PGUSER:-sdvx}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-sdvx}
+      POSTGRES_DB: ${PGDATABASE:-sdvx}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      sdvx_net:
+        aliases: [ "pg" ]
+
+volumes:
+  pgdata:
+
+networks:
+  sdvx_net:
+    external: true
