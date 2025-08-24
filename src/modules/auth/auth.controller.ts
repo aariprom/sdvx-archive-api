@@ -7,7 +7,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import type { JwtUser } from '../../common/types/auth-request';
 
-@ApiTags('auth')
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}

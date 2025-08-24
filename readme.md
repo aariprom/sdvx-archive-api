@@ -1,4 +1,5 @@
 ### local (host execution)
+
 ```
 $ npm run build
 $ npm run prisma:generate
@@ -9,16 +10,19 @@ $ npm run start:local
 ```
 
 ### local (container execution)
+
 ```
 $ npm run build
 $ npm run prisma:generate
 $ npm run prisma:migrate:local
 $ npm run net:up
+$ npm run compose:up:local
 $ npm run db:up:local
 $ npm run dev:local
 ```
 
 ### dev (container execution)
+
 ```
 $ npm run build
 $ npm run prisma:generate

@@ -4,10 +4,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
-/* ========= Enums ========= */
+/**
+ * ========= Enums =========
+ */
 
 enum DifficultyStd {
   NOV
@@ -37,7 +39,7 @@ enum GradeStd {
   ETC
 }
 
-enum ClearTypeStd  {
+enum ClearTypeStd {
   PUC
   UC
   MAX
@@ -48,20 +50,22 @@ enum ClearTypeStd  {
   ETC
 }
 
-enum SourceType    {
+enum SourceType {
   MANUAL
   CSV
   API
   ETC
 }
 
-enum ImportStatus  {
+enum ImportStatus {
   PENDING
   DONE
   FAILED
 }
 
-/* ========= Auth ========= */
+/**
+ * ========= Auth =========
+ */
 
 model User {
   id           String   @id @default(cuid())
@@ -73,48 +77,50 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // relations
-  plays        Play[]
-  importJobs   ImportJob[]
-  tokens       RefreshToken[]
+  plays      Play[]
+  importJobs ImportJob[]
+  tokens     RefreshToken[]
 
   @@index([createdAt])
 }
 
 model RefreshToken {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   // 해시 저장 (원문 저장 금지)
-  tokenHash  String
-  userAgent  String?
-  ip         String?
-  createdAt  DateTime @default(now())
-  expiresAt  DateTime
-  revokedAt  DateTime?
+  tokenHash String    @unique
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
 
   @@index([userId, createdAt])
   @@index([expiresAt])
 }
 
-/* ========= SDVX Data ========= */
+/**
+ * ========= SDVX Data =========
+ */
 
 model Track {
-  id              String   @id @default(cuid())
-  name            String
-  artist          String?
-  effecter        String?
+  id        String   @id @default(cuid())
+  name      String
+  artist    String?
+  effecter  String?
   // false if it is deleted or unavailable
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  charts          Chart[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  charts    Chart[]
 
   @@index([name])
 }
 
 model Chart {
-  id              String        @id @default(cuid())
-  trackId         String
+  id      String @id @default(cuid())
+  trackId String
 
   // data
   // prevent the deleteion of Track if related Chart exists
@@ -126,79 +132,81 @@ model Chart {
   bpmMax          Int?
   jacketUrl       String?
   // date of the chart updated on SDVX
-  version         DateTime?
+  versionAt       String
 
   // relations
   play Play[]
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@unique([trackId, difficultyLabel, level])
   @@index([trackId, level])
   @@index([trackId, difficultyLabel, level])
-  // there are no charts with same track and same difficulty label
-  @@unique([trackId, difficultyLabel])
 }
 
-/* ========= Play & Source ========= */
+/**
+ * ========= Play & Source =========
+ */
 
 model Source {
-  id         String     @id @default(cuid())
-  type       SourceType
-  label      String?
-  meta       Json?
-  createdAt  DateTime   @default(now())
+  id        String     @id @default(cuid())
+  type      SourceType
+  label     String?
+  meta      Json?
+  createdAt DateTime   @default(now())
 
-  plays      Play[]
+  plays Play[]
 }
 
 model Play {
-  id            String        @id @default(cuid())
-  userId        String
-  chartId       String
-  sourceId      String?
-  playedAt      DateTime
+  id       String   @id @default(cuid())
+  userId   String
+  chartId  String
+  sourceId String
+  playedAt DateTime
 
   // relations
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chart         Chart         @relation(fields: [chartId], references: [id], onDelete: Restrict)
-  source        Source?       @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chart  Chart  @relation(fields: [chartId], references: [id], onDelete: Restrict)
+  source Source @relation(fields: [sourceId], references: [id], onDelete: NoAction)
 
   // data
   // some fields maybe only available when manual/csv
-  score         Int
-  gradeStd      GradeStd?
-  clearTypeStd  ClearTypeStd?
-  gaugeValue    Int?
-  crit          Int?
-  near          Int?
-  error         Int?
-  maxChain      Int?
-  volforce      Decimal?      @db.Decimal(5, 3) // amount of volforce that this play worth
-  memo          String?
+  score        Int
+  gradeStd     GradeStd?
+  clearTypeStd ClearTypeStd?
+  gaugeValue   Decimal?      @db.Decimal(3, 1)
+  crit         Int?
+  near         Int?
+  error        Int?
+  maxChain     Int?
+  volforce     Decimal?      @db.Decimal(5, 3) // amount of volforce that this play worth
+  memo         String?
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@unique([userId, chartId, sourceId, playedAt])
   @@index([userId, playedAt])
   @@index([chartId, score])
   @@index([userId, chartId, playedAt])
-
-  @@unique([userId, chartId, sourceId, playedAt])
 }
 
-/* ========= Import Log ========= */
+/**
+ * ========= Import Log =========
+ */
 
 model ImportJob {
-  id         String        @id @default(cuid())
-  userId     String
-  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status     ImportStatus  @default(PENDING)
+  id     String       @id @default(cuid())
+  userId String
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status ImportStatus @default(PENDING)
 
-  fileName   String
-  fileUrl    String
+  fileName String
+  fileUrl  String
 
-  createdAt  DateTime      @default(now())
+  createdAt  DateTime  @default(now())
   finishedAt DateTime?
   summary    Json?
 }
