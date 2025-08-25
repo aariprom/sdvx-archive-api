@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ChartService {
@@ -37,6 +38,19 @@ export class ChartService {
       this.prisma.chart.count({ where }),
     ]);
     return { items, total, page, pageSize };
+  }
+
+  async chart(id: string) {
+    try {
+      const chart = await this.prisma.chart.findFirstOrThrow({
+        where: { id },
+      });
+      return chart;
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
+        throw new NotFoundException('No chart found');
+      }
+    }
   }
 
   // 차트별 랭킹

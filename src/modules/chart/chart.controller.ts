@@ -24,6 +24,11 @@ export class ChartController {
     });
   }
 
+  @Get(':id')
+  chart(@Param('id') id: string) {
+    return this.svc.chart(id);
+  }
+
   @Get(':chartId/leaderboard')
   leaderboard(@Param('chartId') chartId: string, @Query('take') take = '50') {
     return this.svc.leaderboard(chartId, Number(take));
